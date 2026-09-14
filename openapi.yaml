@@ -1,0 +1,605 @@
+openapi: 3.0.3
+info:
+  title: Demandforge
+  version: 0.1.0
+  description: >-
+    Domestic AI demand forge matching Canadian enterprise problems to startups and talent
+    with funded engagements, value proofs and trust readiness — so research strength stops
+    exporting abroad and adoption moves past perpetual pilots.
+  x-product-slug: ai-gov-demandforge
+  x-source: ai-in-gov/omnia_canada_ai_imperative/
+servers:
+  - url: https://api.example.com
+tags:
+  - name: ProblemBriefs
+  - name: Suppliers
+  - name: Matches
+  - name: Engagements
+  - name: ValueProofs
+  - name: RiskReadiness
+  - name: Reporting
+paths:
+  /v1/problem-briefs:
+    get:
+      operationId: listProblemBriefs
+      tags: [ProblemBriefs]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema: { type: string, enum: [draft, published, matched, closed] }
+        - name: locale
+          in: query
+          schema: { type: string, enum: [en, fr] }
+      responses:
+        '200':
+          description: Problem briefs page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeProblemBrief' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      operationId: publishProblemBrief
+      tags: [ProblemBriefs]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProblemBriefCreate' }
+      responses:
+        '201':
+          description: Brief published
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeProblemBrief' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /v1/suppliers:
+    get:
+      operationId: listSuppliers
+      tags: [Suppliers]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: kind
+          in: query
+          schema: { type: string, enum: [startup, scaleup, institute, lab] }
+      responses:
+        '200':
+          description: Suppliers page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeSupplier' }
+    post:
+      operationId: registerSupplier
+      tags: [Suppliers]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SupplierCreate' }
+      responses:
+        '201':
+          description: Supplier registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeSupplier' }
+  /v1/matches:
+    get:
+      operationId: listMatches
+      tags: [Matches]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Matches page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeMatch' }
+    post:
+      operationId: proposeMatch
+      tags: [Matches]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MatchCreate' }
+      responses:
+        '201':
+          description: Match proposed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeMatch' }
+  /v1/engagements:
+    get:
+      operationId: listEngagements
+      tags: [Engagements]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: stage
+          in: query
+          schema: { type: string, enum: [experiment, pilot, production] }
+      responses:
+        '200':
+          description: Engagements page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeEngagement' }
+    post:
+      operationId: createEngagement
+      tags: [Engagements]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EngagementCreate' }
+      responses:
+        '201':
+          description: Engagement created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeEngagement' }
+  /v1/engagements/{engagementId}/advance:
+    parameters:
+      - name: engagementId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      operationId: advanceEngagement
+      tags: [Engagements]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [toStage]
+              properties:
+                toStage: { type: string, enum: [experiment, pilot, production] }
+      responses:
+        '200':
+          description: Engagement advanced
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeEngagement' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /v1/value-proofs:
+    get:
+      operationId: listValueProofs
+      tags: [ValueProofs]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: engagementId
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Value proofs page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeValueProof' }
+    post:
+      operationId: submitValueProof
+      tags: [ValueProofs]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ValueProofCreate' }
+      responses:
+        '201':
+          description: Value proof submitted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeValueProof' }
+  /v1/risk-readiness:
+    get:
+      operationId: listRiskReadiness
+      tags: [RiskReadiness]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: engagementId
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Risk readiness page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeRiskReadiness' }
+    post:
+      operationId: submitRiskReadiness
+      tags: [RiskReadiness]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RiskReadinessCreate' }
+      responses:
+        '201':
+          description: Risk readiness recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeRiskReadiness' }
+  /v1/risk-readiness/{readinessId}/gate:
+    parameters:
+      - name: readinessId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      operationId: decideRiskGate
+      tags: [RiskReadiness]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision, reviewerId]
+              properties:
+                decision: { type: string, enum: [pass, fail] }
+                reviewerId: { type: string }
+                notes: { type: string }
+      responses:
+        '200':
+          description: Gate decision
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeRiskReadiness' }
+  /v1/reporting/prosperity-export:
+    get:
+      operationId: exportProsperityReport
+      tags: [Reporting]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - name: period
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Prosperity export
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeProsperityExport' }
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    UnprocessableEntity:
+      description: Unprocessable entity
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    ResponseMeta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId: { type: string }
+        timestamp: { type: string, format: date-time }
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+
+
+    DataEnvelopeProblemBrief:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/ProblemBrief' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeProblemBrief:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/ProblemBrief' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+    DataEnvelopeSupplier:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/Supplier' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeSupplier:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Supplier' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+    DataEnvelopeMatch:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/Match' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeMatch:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Match' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+    DataEnvelopeEngagement:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/Engagement' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeEngagement:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Engagement' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+    DataEnvelopeValueProof:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/ValueProof' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeValueProof:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/ValueProof' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+    DataEnvelopeRiskReadiness:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/RiskReadiness' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeRiskReadiness:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/RiskReadiness' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+    DataEnvelopeProsperityExport:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/ProsperityExport' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeProsperityExport:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/ProsperityExport' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+    ProblemBrief:
+      type: object
+      required: [id, title, buyerOrgId, status, budgetAvailable]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        buyerOrgId: { type: string }
+        status: { type: string, enum: [draft, published, matched, closed] }
+        budgetAvailable: { type: number }
+        locale: { type: string, enum: [en, fr] }
+        provinceCode: { type: string }
+        barrierTags:
+          type: array
+          items: { type: string, enum: [trust, skills, data, discovery] }
+    ProblemBriefCreate:
+      type: object
+      required: [title, buyerOrgId, budgetAvailable]
+      properties:
+        title: { type: string }
+        buyerOrgId: { type: string }
+        budgetAvailable: { type: number }
+        locale: { type: string, enum: [en, fr], default: en }
+        provinceCode: { type: string }
+        summary: { type: string }
+        barrierTags:
+          type: array
+          items: { type: string, enum: [trust, skills, data, discovery] }
+    Supplier:
+      type: object
+      required: [id, name, kind, canadianDomiciled]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [startup, scaleup, institute, lab] }
+        canadianDomiciled: { type: boolean }
+        nodeAffiliation: { type: string, enum: [vector, mila, amii, other, none] }
+        commercialisationReadiness: { type: string, enum: [research, prototype, market_ready] }
+    SupplierCreate:
+      type: object
+      required: [name, kind, canadianDomiciled]
+      properties:
+        name: { type: string }
+        kind: { type: string, enum: [startup, scaleup, institute, lab] }
+        canadianDomiciled: { type: boolean }
+        nodeAffiliation: { type: string, enum: [vector, mila, amii, other, none] }
+    Match:
+      type: object
+      required: [id, briefId, supplierId, status]
+      properties:
+        id: { type: string }
+        briefId: { type: string }
+        supplierId: { type: string }
+        status: { type: string, enum: [proposed, accepted, declined] }
+    MatchCreate:
+      type: object
+      required: [briefId, supplierId]
+      properties:
+        briefId: { type: string }
+        supplierId: { type: string }
+    Engagement:
+      type: object
+      required: [id, matchId, stage, teamLocationCanada]
+      properties:
+        id: { type: string }
+        matchId: { type: string }
+        stage: { type: string, enum: [experiment, pilot, production] }
+        teamLocationCanada: { type: boolean }
+        ipArrangement: { type: string }
+        fundingStage: { type: string, enum: [grant, angel, vc, scaleup, procurement] }
+        valueProofRequired: { type: boolean }
+    EngagementCreate:
+      type: object
+      required: [matchId, stage, teamLocationCanada, ipArrangement]
+      properties:
+        matchId: { type: string }
+        stage: { type: string, enum: [experiment, pilot, production] }
+        teamLocationCanada: { type: boolean }
+        ipArrangement: { type: string }
+        fundingStage: { type: string, enum: [grant, angel, vc, scaleup, procurement] }
+    ValueProof:
+      type: object
+      required: [id, engagementId, metricName, metricValue]
+      properties:
+        id: { type: string }
+        engagementId: { type: string }
+        metricName: { type: string }
+        metricValue: { type: number }
+        baselineValue: { type: number }
+        evidenceRef: { type: string }
+        verified: { type: boolean }
+    ValueProofCreate:
+      type: object
+      required: [engagementId, metricName, metricValue]
+      properties:
+        engagementId: { type: string }
+        metricName: { type: string }
+        metricValue: { type: number }
+        baselineValue: { type: number }
+        evidenceRef: { type: string }
+    RiskReadiness:
+      type: object
+      required: [id, engagementId, status]
+      properties:
+        id: { type: string }
+        engagementId: { type: string }
+        status: { type: string, enum: [incomplete, submitted, passed, failed] }
+        explanationAudit: { type: boolean }
+        cyberPosture: { type: boolean }
+        legalResponsibility: { type: boolean }
+        ethicsRegister: { type: boolean }
+    RiskReadinessCreate:
+      type: object
+      required: [engagementId]
+      properties:
+        engagementId: { type: string }
+        explanationAudit: { type: boolean }
+        cyberPosture: { type: boolean }
+        legalResponsibility: { type: boolean }
+        ethicsRegister: { type: boolean }
+    ProsperityExport:
+      type: object
+      required: [period, generatedAt]
+      properties:
+        period: { type: string }
+        generatedAt: { type: string, format: date-time }
+        businessAdoptionPct: { type: number }
+        paidEngagements: { type: integer }
+        downloadUrl: { type: string, format: uri }
